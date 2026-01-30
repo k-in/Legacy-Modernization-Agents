@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.22.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8" />
+    <PackageReference Include="Neo4j.Driver" Version="5.15.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="McpChatWeb\**\*.cs" />
+    <Compile Remove="McpChatWeb.Tests\**\*.cs" />
+    <EmbeddedResource Remove="McpChatWeb\**\*" />
+    <EmbeddedResource Remove="McpChatWeb.Tests\**\*" />
+    <None Remove="McpChatWeb\**\*" />
+    <None Remove="McpChatWeb.Tests\**\*" />
+    <Content Remove="McpChatWeb\**\*" />
+    <Content Remove="McpChatWeb.Tests\**\*" />
+  </ItemGroup>
+
+<ItemGroup>
+  <Compile Remove="output\**" />
+</ItemGroup>
+
+</Project>

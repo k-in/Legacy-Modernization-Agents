@@ -1,0 +1,137 @@
+# =============================================================================
+# Azure Developer CLI (azd) Configuration
+# COBOL to Quarkus Migration Demo - Azure Container Apps Deployment
+# =============================================================================
+# Usage:
+#   azd auth login
+#   azd env new <env-name>
+#   azd up
+#
+# Environment variables are automatically loaded from Config/ai-config.local.env
+# =============================================================================
+
+name: cobol-migration-demo
+metadata:
+  template: cobol-migration-demo@0.0.1
+
+# Azure infrastructure configuration
+infra:
+  provider: bicep
+  path: infra
+
+# Pipeline configuration (optional - for CI/CD)
+pipeline:
+  provider: github
+
+# Hooks for custom scripts
+hooks:
+  # Pre-provision hook - load environment variables from ai-config.local.env
+  preprovision:
+    shell: sh
+    run: |
+      echo "🔧 Loading environment variables from Config/ai-config.local.env..."
+      
+      CONFIG_FILE="Config/ai-config.local.env"
+      
+      if [ -f "$CONFIG_FILE" ]; then
+        echo "✅ Found configuration file: $CONFIG_FILE"
+        
+        # Parse and set environment variables for azd
+        while IFS='=' read -r key value; do
+          # Skip comments and empty lines
+          case "$key" in
+            \#*|"") continue ;;
+          esac
+          
+          # Remove surrounding quotes from value
+          value=$(echo "$value" | sed 's/^"//' | sed 's/"$//')
+          
+          # Set the environment variable for azd if it's one of our required vars
+          case "$key" in
+            AZURE_OPENAI_ENDPOINT|AZURE_OPENAI_API_KEY|AZURE_OPENAI_DEPLOYMENT_NAME|AZURE_OPENAI_MODEL_ID|NEO4J_PASSWORD)
+              echo "  → Setting $key"
+              azd env set "$key" "$value" 2>/dev/null || true
+              ;;
+          esac
+        done < "$CONFIG_FILE"
+        
+        echo "✅ Environment variables loaded"
+      else
+        echo "⚠️  Config file not found: $CONFIG_FILE"
+        echo "   Please create it from Config/ai-config.local.env.template"
+        echo "   Or set variables manually with: azd env set <KEY> <VALUE>"
+      fi
+
+  # Post-provision hook - build and push Docker image to ACR, then update Container App
+  # This runs after provision (ACR exists) and completes the full deployment.
+  # Using postprovision allows 'azd up' to work in one command.
+  postprovision:
+    shell: sh
+    run: |
+      echo "🐳 Building and pushing mcpchatweb image to ACR (local build)..."
+
+      # Workaround for older Docker daemons in some devcontainer setups
+      export DOCKER_API_VERSION="${DOCKER_API_VERSION:-1.43}"
+
+      # Azure CLI auth is required for ACR login.
+      if ! az account show >/dev/null 2>&1; then
+        echo "❌ Azure CLI is not logged in."
+        echo "   Run one of the following, then retry:"
+        echo "     - azd auth login"
+        echo "     - az login"
+        exit 1
+      fi
+
+      # Read values from azd environment
+      ACR_NAME=$(azd env get-values 2>/dev/null | grep '^AZURE_CONTAINER_REGISTRY_NAME=' | cut -d'=' -f2 | tr -d '"')
+      ACR_LOGIN_SERVER=$(azd env get-values 2>/dev/null | grep '^AZURE_CONTAINER_REGISTRY_ENDPOINT=' | cut -d'=' -f2 | tr -d '"')
+      ENV_NAME=$(azd env get-values 2>/dev/null | grep '^AZURE_ENV_NAME=' | cut -d'=' -f2 | tr -d '"')
+      RG_NAME=$(azd env get-values 2>/dev/null | grep '^AZURE_RESOURCE_GROUP=' | cut -d'=' -f2 | tr -d '"')
+      MCPCHATWEB_NAME=$(azd env get-values 2>/dev/null | grep '^SERVICE_MCPCHATWEB_NAME=' | cut -d'=' -f2 | tr -d '"')
+
+      if [ -z "$ACR_NAME" ] || [ -z "$ACR_LOGIN_SERVER" ] || [ -z "$ENV_NAME" ]; then
+        echo "❌ Missing azd environment values (ACR_NAME / ACR_LOGIN_SERVER / ENV_NAME)"
+        echo "   Provision may have failed. Check Azure portal for details."
+        exit 1
+      fi
+
+      IMAGE_REF="${ACR_LOGIN_SERVER}/mcpchatweb:${ENV_NAME}"
+      echo "  → Image: ${IMAGE_REF}"
+
+      # Authenticate Docker to ACR
+      az acr login --name "$ACR_NAME" >/dev/null
+
+      # Build from repo root so Dockerfile can COPY shared artifacts (Data/, output/, Config/, CLI csproj)
+      docker build -f McpChatWeb/Dockerfile -t "$IMAGE_REF" .
+      docker push "$IMAGE_REF"
+
+      echo "✅ Pushed: ${IMAGE_REF}"
+
+      # Update Container App with the new image
+      echo "🔄 Updating Container App with new image..."
+      if [ -n "$MCPCHATWEB_NAME" ] && [ -n "$RG_NAME" ]; then
+        az containerapp update \
+          --name "$MCPCHATWEB_NAME" \
+          --resource-group "$RG_NAME" \
+          --image "$IMAGE_REF" \
+          --output none
+        echo "✅ Container App updated: $MCPCHATWEB_NAME"
+        
+        # Get the FQDN for display
+        FQDN=$(az containerapp show --name "$MCPCHATWEB_NAME" --resource-group "$RG_NAME" --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null)
+        
+        echo ""
+        echo "=========================================="
+        echo "  COBOL Migration Demo Deployed!"
+        echo "=========================================="
+        echo ""
+        echo "Access the Web Portal at:"
+        echo "  https://${FQDN}"
+        echo ""
+        echo "Neo4j Browser (internal only):"
+        echo "  http://neo4j:7474"
+        echo ""
+      else
+        echo "⚠️  Could not find Container App name or resource group. Skipping update."
+        echo "   Run 'azd deploy' manually to update the Container App."
+      fi

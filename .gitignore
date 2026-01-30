@@ -1,0 +1,192 @@
+# .NET build outputs
+bin/
+obj/
+out/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.vscode/settings.json
+
+# Rider
+.idea/
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Azure Functions
+local.settings.json
+
+# =============================================================================
+# SECURITY - Sensitive Information Protection
+# =============================================================================
+
+# Ignore all Config folder files to prevent credential leaks
+Config/
+!Config/.gitkeep
+
+# Azure OpenAI Credentials and API Keys
+Config/ai-config.local.env
+Config/*.local.env
+Config/ai-config.env
+Config/appsettings.json
+Config/appsettings.local.json
+Config/appsettings.secrets.json
+*.key
+*.secret
+
+# Environment files with real credentials
+.env
+.env.local
+.env.production
+.env.staging
+
+# API Keys and sensitive configuration
+**/appsettings.Production.json
+**/appsettings.Staging.json
+**/local.settings.json
+
+# =============================================================================
+# BUSINESS SENSITIVE - Proprietary Content
+# =============================================================================
+
+# COBOL Source Files (Contains proprietary business logic)
+# Note: Sample files in source/ are kept for demo purposes
+source/*
+!source/.gitkeep
+!source/*.cbl
+!source/*.cpy
+
+# Ignore COBOL files everywhere else (but not in source/)
+*.cbl
+*.cpy
+*.cob
+# Re-allow sample files in source
+!source/*.cbl
+!source/*.cpy
+
+# Generated Output (Contains converted business logic and reverse engineering results)
+output/*
+!output/.gitkeep
+Output/
+generated-java/
+reverse-engineering-output/
+
+# =============================================================================
+# DATABASE FILES - Persistent Local Storage
+# =============================================================================
+
+# SQLite migration database (Contains all run data, persists locally)
+Data/
+Data/migration.db
+Data/migration.db-*
+*.db
+*.db-shm
+*.db-wal
+
+# Database backups
+*.db.backup
+*.sql.backup
+migration_backup*.sql
+
+# =============================================================================
+# LOGS AND TEMPORARY FILES
+# =============================================================================
+
+# All log files (May contain API calls, credentials, business data)
+Logs/
+logs/
+*.log
+Log/
+LogFiles/
+
+# Temporary and cache files
+*.tmp
+*.temp
+*.cache
+cache/
+temp/
+
+# Test outputs and temporary migration files
+TestOutput/
+test-migration/
+migration-temp/
+
+# Backup directories created by cleanup scripts
+.cleanup-backup/
+backups/
+
+# =============================================================================
+# SYSTEM FILES
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# =============================================================================
+# ALLOW SPECIFIC DOCUMENTATION FILES (Override above excludes)
+# =============================================================================
+
+# Keep important documentation that shows capabilities
+!docs/examples/*.md
+!examples/migration-report-sample.md
+!examples/dependency-diagram-sample.md
+
+# Database files (auto-created on first run)
+Data/*.db
+Data/*.db-*
