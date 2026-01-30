@@ -1158,6 +1158,7 @@ azd env set AZURE_LOCATION "japaneast"
 
 # 4. Deploy everything in one command!
 azd up
+
 ```
 > **Tip:** If missing Data/migration.db, run a migration first. Use `doctor.sh run`
 
@@ -1215,6 +1216,7 @@ az containerapp logs show --name mcpchatweb --resource-group rg-<env-name>
 
 # Tear down all resources
 azd down
+
 ```
 
 ### Update Deployment
@@ -1225,6 +1227,7 @@ azd deploy
 
 # Update infrastructure and code
 azd up
+
 ```
 
 ---
